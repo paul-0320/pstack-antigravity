@@ -57,6 +57,7 @@ const scanTargets = [
   ...walk(PLUGIN),
   ...walk(OVERLAY),
   ...(existsSync(join(ROOT, "README.md")) ? [join(ROOT, "README.md")] : []),
+  ...(existsSync(join(ROOT, "README.ko.md")) ? [join(ROOT, "README.ko.md")] : []),
 ];
 
 for (const full of scanTargets) {

@@ -1,5 +1,7 @@
 # pstack-antigravity
 
+**English** | [한국어](./README.ko.md)
+
 > **Unofficial Antigravity port** of [pstack](https://github.com/cursor/plugins/tree/main/pstack) (`0.15.48`, MIT, [Lauren Tan / poteto](https://x.com/poteto)). Upstream `pstack` supports Cursor and Claude Code, not Google Antigravity (`agy`). This repository builds and verifies a clean, relocatable Antigravity plugin from upstream sources.
 
 ## Highlights
