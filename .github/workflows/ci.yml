@@ -1,0 +1,23 @@
+name: Verify Antigravity Port
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check generated pstack/ tree is up to date
+        run: node scripts/build-antigravity-pstack.mjs --check
+      - name: Run packaging linter
+        run: node scripts/lint-port.mjs
+      - name: Check shell script syntax
+        run: |
+          bash -n scripts/sync-upstream.sh
+          bash -n pstack/skills/poteto-mode/scripts/worktree-audit.sh

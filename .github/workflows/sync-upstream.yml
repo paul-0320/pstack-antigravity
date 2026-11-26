@@ -1,0 +1,135 @@
+name: Sync Upstream pstack
+
+on:
+  schedule:
+    # Daily at 03:00 UTC (12:00 KST)
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: sync-upstream-pstack
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fetch upstream cursor/plugins pstack
+        id: fetch
+        run: |
+          set -euo pipefail
+          TMP="$(mktemp -d)"
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/cursor/plugins.git "$TMP/repo"
+          git -C "$TMP/repo" sparse-checkout set pstack
+          UP_COMMIT="$(git -C "$TMP/repo" rev-parse --short HEAD)"
+          UP_VERSION="$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$TMP/repo/pstack/plugin.json")"
+          CUR_VERSION="$(node -e "console.log(JSON.parse(require('fs').readFileSync('upstream/UPSTREAM.json','utf8')).version)")"
+
+          rm -rf upstream/pstack
+          cp -R "$TMP/repo/pstack" upstream/pstack
+          find upstream/pstack -name '.DS_Store' -delete
+
+          if git diff --quiet -- upstream/pstack && [ -z "$(git ls-files --others --exclude-standard upstream/pstack)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Upstream pstack is already up to date (${CUR_VERSION})."
+            exit 0
+          fi
+
+          cat > upstream/UPSTREAM.json <<EOF
+          {
+            "repository": "https://github.com/cursor/plugins",
+            "subpath": "pstack",
+            "version": "${UP_VERSION}",
+            "commit": "${UP_COMMIT}",
+            "license": "MIT",
+            "author": "Lauren Tan"
+          }
+          EOF
+
+          # Update overlay/plugin.json version: <upstream>+agy.1 (or increment rev if upstream version unchanged).
+          NEXT_PORT_VERSION="$(node -e '
+            const fs = require("fs");
+            const upVer = process.argv[1];
+            const pkg = JSON.parse(fs.readFileSync("overlay/plugin.json", "utf8"));
+            const m = String(pkg.version || "").match(/^(\d+\.\d+\.\d+)\+agy\.(\d+)$/);
+            const next = (m && m[1] === upVer) ? `${upVer}+agy.${Number(m[2]) + 1}` : `${upVer}+agy.1`;
+            pkg.version = next;
+            fs.writeFileSync("overlay/plugin.json", JSON.stringify(pkg, null, 2) + "\n");
+            console.log(next);
+          ' "$UP_VERSION")"
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "up_version=${UP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "up_commit=${UP_COMMIT}" >> "$GITHUB_OUTPUT"
+          echo "port_version=${NEXT_PORT_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild and lint Antigravity plugin
+        if: steps.fetch.outputs.changed == 'true'
+        id: build
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          {
+            node scripts/build-antigravity-pstack.mjs
+            node scripts/build-antigravity-pstack.mjs --check
+            node scripts/lint-port.mjs
+            bash -n pstack/skills/poteto-mode/scripts/worktree-audit.sh
+          } 2>&1 | tee /tmp/sync-build.log
+
+      - name: Open issue when automated rebuild fails
+        if: steps.fetch.outputs.changed == 'true' && steps.build.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE="Upstream pstack ${{ steps.fetch.outputs.up_version }} (${{ steps.fetch.outputs.up_commit }}) needs adapter update"
+          EXISTING="$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')"
+          BODY="$(printf 'Automated sync detected upstream pstack `%s` (`%s`), but rebuild/lint failed.\n\nUpdate `overlay/docs/harness/antigravity.md` or `scripts/build-antigravity-pstack.mjs` and rebuild locally.\n\n```text\n%s\n```\n' \
+            "${{ steps.fetch.outputs.up_version }}" "${{ steps.fetch.outputs.up_commit }}" "$(tail -n 80 /tmp/sync-build.log)")"
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+          exit 1
+
+      - name: Push sync branch and open or update PR
+        if: steps.fetch.outputs.changed == 'true' && steps.build.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="chore/sync-upstream-${{ steps.fetch.outputs.up_version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add upstream overlay/plugin.json pstack
+          git commit -m "chore(upstream): sync pstack ${{ steps.fetch.outputs.up_version }} (${{ steps.fetch.outputs.up_commit }})"
+          git push --force origin "$BRANCH"
+
+          TITLE="chore(upstream): sync pstack ${{ steps.fetch.outputs.up_version }} (${{ steps.fetch.outputs.port_version }})"
+          BODY="$(printf 'Automated upstream sync from `cursor/plugins/pstack`.\n\n- Upstream version: `%s` (`%s`)\n- Antigravity port version: `%s`\n- Verified: `build-antigravity-pstack.mjs --check`, `lint-port.mjs`, `bash -n`\n\nReview the diff and merge to publish the updated `pstack/` tree.' \
+            "${{ steps.fetch.outputs.up_version }}" "${{ steps.fetch.outputs.up_commit }}" "${{ steps.fetch.outputs.port_version }}")"
+
+          EXISTING_PR="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY"
+          fi
