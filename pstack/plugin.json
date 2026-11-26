@@ -1,0 +1,13 @@
+{
+  "name": "pstack",
+  "displayName": "pstack",
+  "version": "0.15.48+agy.1",
+  "description": "Unofficial Antigravity port of pstack 0.15.48 (MIT, Lauren Tan). Rigorous agent workflows you can parallelize with confidence.",
+  "author": {
+    "name": "Lauren Tan"
+  },
+  "homepage": "https://github.com/paul-0320/pstack-antigravity",
+  "repository": "https://github.com/paul-0320/pstack-antigravity",
+  "license": "MIT",
+  "logo": "assets/logo.png"
+}
