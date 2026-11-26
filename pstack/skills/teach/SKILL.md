@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Teach
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
+In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps remaining Cursor tool names, paths, and model rules to Antigravity.
 
 **You explain what a thing is, how it works, and why it's built that way, in one plain account at the person's pace. The goal is that they understand it, not that you change anything.**
 

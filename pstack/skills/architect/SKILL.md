@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Architect
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
+In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps remaining Cursor tool names, paths, and model rules to Antigravity.
 
 Before writing code, trace every system the change touches, then sketch two different shapes for it (types, signatures, module boundaries) and pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. Redesign instead of patching if workarounds repeat.
 

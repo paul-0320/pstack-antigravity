@@ -4,15 +4,16 @@ In this page you install the plugin, pick which models pstack uses, and run your
 
 ## Install the plugin
 
-In a Cursor chat, run:
+In a terminal, clone the Antigravity port repository and install the plugin:
 
-```text
-/add-plugin pstack
+```bash
+git clone https://github.com/paul-0320/pstack-antigravity.git
+agy plugin validate ./pstack-antigravity/pstack --strict
+agy plugin install ./pstack-antigravity/pstack
+agy plugin list
 ```
 
-Cursor confirms the plugin is installed.
-
-In Claude Code, run `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Claude Code prefixes plugin commands, so each command in this guide takes a `pstack:` prefix there, such as `/pstack:setup-pstack`, which writes its model rule to `~/.claude/rules/pstack-models.md`. The [Claude Code adapter](https://github.com/cursor/plugins/blob/main/pstack/docs/harness/claude-code.md) covers the other differences.
+Antigravity does not prefix plugin commands, so each command in this guide keeps its plain name (such as `/setup-pstack` and `/poteto-mode`, with `/swarm` renamed to `/pstack-swarm`). `/setup-pstack` writes your model choices to `~/.gemini/config/pstack-models.md` outside the plugin folder so updates preserve your settings. The [Antigravity adapter](../harness/antigravity.md) covers every Cursor-to-Antigravity mapping.
 
 ## Pick your models
 
@@ -22,7 +23,7 @@ Run:
 /setup-pstack
 ```
 
-[`/setup-pstack`](../../skills/setup-pstack/SKILL.md) detects the models you have access to, asks for a reasoning budget, shows you each role (code delegates, judgment, the review panels), and asks what you want. Answer the questions. It writes `~/.cursor/rules/pstack-models.mdc`, a small rule every pstack skill reads.
+[`/setup-pstack`](../../skills/setup-pstack/SKILL.md) detects the models you have access to, asks for a reasoning budget, shows you each role (code delegates, judgment, the review panels), and asks what you want. Answer the questions. It writes `~/.gemini/config/pstack-models.md`, a small rule every pstack skill reads.
 
 The defaults are the same as the `large` budget. Code, prose, and judgment run on Opus 5.5 at `xhigh` reasoning, and the review panels and swarm workers run at `high`. No role runs above `xhigh`. Outside a review panel, Fable 5.2 runs only when you name it for a task or after two Opus 5.5 runs of the same brief fail their check. `medium` lowers each role one level and `small` lowers it two, and both spend fewer tokens.
 
@@ -34,7 +35,7 @@ You might be wondering what happens if you use Auto. Set a role to `inherit-pare
 
 At the end of setup, `/setup-pstack` looks for a way to prove app behavior in your project, either a `verify-*` skill or an existing harness. If it finds neither, it offers once to generate one with [`/create-verification-skill`](../../skills/create-verification-skill/SKILL.md).
 
-Say yes and it writes `.cursor/skills/verify-<app>/`, a project-local skill that teaches agents to drive your app the way a user does. It proves the skill works once before handing it over. Say no and setup moves on. You can run `/create-verification-skill` yourself any time. [Verify and ship](./06-verify-and-ship.md#create-a-project-verification-skill) covers it in depth.
+Say yes and it writes `.agents/skills/verify-<app>/`, a project-local skill that teaches agents to drive your app the way a user does. It proves the skill works once before handing it over. Say no and setup moves on. You can run `/create-verification-skill` yourself any time. [Verify and ship](./06-verify-and-ship.md#create-a-project-verification-skill) covers it in depth.
 
 If you're new to pstack, say yes. An agent that can check its own work keeps going until the check passes. An agent that can't hands every result back to you to check by hand. Of everything in this guide, the verification skill pays off the most.
 

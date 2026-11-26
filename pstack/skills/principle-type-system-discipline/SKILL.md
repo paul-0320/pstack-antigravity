@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Type System Discipline
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
+In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps remaining Cursor tool names, paths, and model rules to Antigravity.
 
 Make the compiler reject impossible states, mismatched primitives, and unhandled variants.
 

@@ -8,7 +8,7 @@ disable-model-invocation: true
 ---
 # How to make a bot UI
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
+In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps remaining Cursor tool names, paths, and model rules to Antigravity.
 
 > **Not supported in Antigravity.** This skill depends on Cursor Cloud Automations (routines, `update_state`, `SendToUser`, `api2.cursor.sh` webhooks). For scheduled background jobs in Antigravity, use the built-in `automation` skill. The upstream text is kept below for reference.
 

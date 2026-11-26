@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Interrogate
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
+In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps remaining Cursor tool names, paths, and model rules to Antigravity.
 
 Adversaries try to break a change or a design. A finding survives only when a run proves it. Report the findings. Do not apply fixes.
 

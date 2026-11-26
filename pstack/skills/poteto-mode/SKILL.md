@@ -8,7 +8,7 @@ color: yellow
 
 # Poteto mode
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
+In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps remaining Cursor tool names, paths, and model rules to Antigravity.
 
 Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's absolute path in every `poteto-agent` prompt.
 
@@ -87,7 +87,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 **Use `subagent_type: "poteto-agent"` for any subagent you spawn directly inside a playbook step.** The chat that receives `/poteto-mode` runs the playbook itself. Routed workflow skills (`interrogate`, `pstack-swarm`) set their own `subagent_type`. Respect it.
 
-**Defaults for every `Task` call.** `run_in_background: true`, agent mode (readonly strips MCP), file pointers not inlined context, and an explicit model per role, Project workers included. `/setup-pstack` writes `~/.cursor/rules/pstack-models.mdc`, whose per-role lines override the defaults below and the role models in the routed skills (`arena`, `pstack-swarm`, `interrogate`). A role with no line keeps its default. A line of `inherit-parent` or `auto` runs the role on the parent model, so omit `model` and spawn `generalPurpose`, because `poteto-agent` defaults to Opus 5.5. Each code playbook reads its own line (`feature, refactoring`, `bug-fix`, `perf-issue`, or `hillclimb`), prose and judgment read `judgment and prose`, and trivial mechanical edits read `swarm workers`. If the rule has no `# defaults: 3` line, an older setup wrote it. Keep honoring its lines, and tell the user once per session to rerun `/setup-pstack`.
+**Defaults for every `Task` call.** `run_in_background: true`, agent mode (readonly strips MCP), file pointers not inlined context, and an explicit model per role, Project workers included. `/setup-pstack` writes `~/.gemini/config/pstack-models.md`, whose per-role lines override the defaults below and the role models in the routed skills (`arena`, `pstack-swarm`, `interrogate`). A role with no line keeps its default. A line of `inherit-parent` or `auto` runs the role on the parent model, so omit `model` and spawn `generalPurpose`, because `poteto-agent` defaults to Opus 5.5. Each code playbook reads its own line (`feature, refactoring`, `bug-fix`, `perf-issue`, or `hillclimb`), prose and judgment read `judgment and prose`, and trivial mechanical edits read `swarm workers`. If the rule has no `# defaults: 3` line, an older setup wrote it. Keep honoring its lines, and tell the user once per session to rerun `/setup-pstack`.
 
 - Code, prose, and judgment: `claude-opus-5-5-xhigh-fast`.
 - Trivial mechanical edits: `claude-opus-5-5-high-fast`.

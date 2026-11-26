@@ -6,8 +6,6 @@ disable-model-invocation: true
 
 # Poteto help
 
-In Antigravity, read [the Antigravity adapter](../../docs/harness/antigravity.md) once per session before following this skill. It maps Cursor tool names, paths, and model rules to Antigravity.
-
 Answer the user's question about pstack, hand them a prompt they can send, and link the file the answer came from. For a help question, don't start the work. The user asked how, and a pstack run spends real tokens, so let them send the prompt.
 
 A message that asks for work, such as "use pstack to fix this bug", is not a help question. Read [`poteto-mode`](../poteto-mode/SKILL.md), do the work under it, and mention once that a Custom Mode keeps it on.
@@ -26,7 +24,7 @@ Infer the need from the message and the conversation. A named situation, such as
 
 Check the state that changes the answer, and mention it only when it does:
 
-- No `~/.cursor/rules/pstack-models.mdc` means `/setup-pstack` hasn't run for this user, so every role uses its default model.
+- No `~/.gemini/config/pstack-models.md` means `/setup-pstack` hasn't run for this user, so every role uses its default model.
 - No `verify-*` skill or other app harness in the project means agents have no scripted way to drive the app. Mention `/create-verification-skill` when the question is about proving a change works.
 - No formal verification skill in the project means no property is checked past what tests reach. Mention `/create-formal-verification-skill` when the question is about a race, an invariant, or another case tests rarely hit. When one exists and the code it covers changed after the commit it records as last in sync, mention `/maintain-formal-verification-skill` if the question touches that code.
 
@@ -45,9 +43,9 @@ Installing changes nothing until the user invokes a skill. Only `/setup-pstack` 
 
 If cost is the worry, say where the tokens go and how to spend fewer. pstack spends extra tokens on subagents and review panels. Rerun `/setup-pstack` and pick a smaller budget or cheaper models. A role set to `auto` or `inherit-parent` runs on the chat's model, which saves tokens when the chat runs on Auto or a cheaper model. A shorter panel list runs fewer subagents, one for each entry. Save `/poteto-mode` for work that needs rigor.
 
-pstack is built for Cursor, and it also installs in Claude Code with `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. There, each command takes a `pstack:` prefix, such as `/pstack:poteto-mode`. The [Claude Code adapter](https://github.com/cursor/plugins/blob/main/pstack/docs/harness/claude-code.md) maps the Cursor names, and a step that needs a Cursor-only feature, such as Bugbot or Automations, is skipped with a one-line note.
+pstack is built for Cursor, and this copy is ported to Antigravity. Here each command keeps its plain name, such as `/poteto-mode` or `/pstack-swarm`. The [Antigravity adapter](../../docs/harness/antigravity.md) maps every remaining Cursor name, and any step that needs a Cursor-only feature (such as Bugbot or Cursor Automations) is skipped with a one-line note (`Skipped in Antigravity: <step>. <reason>.`).
 
-Other tools can read the skills, because they use the Agent Skills format. But most workflow skills, including `/poteto-mode`, `/how`, and `/teach`, spawn Cursor subagents, some with per-role models, and Custom Modes and `/loop` are Cursor features, so those parts may not work there.
+Other tools can read the skills, because they use the Agent Skills format. But most workflow skills, including `/poteto-mode`, `/how`, and `/teach`, spawn Cursor subagents, some with per-role models, and Custom Modes and the `schedule` tool are Cursor features, so those parts may not work there.
 
 ## Start a task with `/poteto-mode`
 
@@ -116,7 +114,7 @@ Close calls:
 Not in pstack:
 
 - `/deslop`, `control-cli`, and `control-ui` ship in the `cursor-team-kit` plugin.
-- `/loop` and `/create-skill` are Cursor built-ins.
+- the `schedule` tool and `/agy-customizations` are Cursor built-ins.
 - pstack has no `/orchestrate` skill. If the slash menu shows `/orchestrate`, another plugin provides it.
 
 ## Playbooks and principles
@@ -146,7 +144,7 @@ Principles are one-rule skills that `/poteto-mode` reads and cites in its replie
 | Runs cost more than expected | See the cost paragraph under Get set up. |
 | A skill didn't load on its own | Only `/setup-pstack` loads from the user's words. The others load when the user types them or when `/poteto-mode` runs them, and it doesn't run every skill. |
 | Parallel agents overwrote each other | Give each agent its own worktree, or run them as cloud agents, which each get their own machine. |
-| An overnight run moved but finished nothing | `/loop` needs a check that can pass or fail, not a duration. See [guide page 7](../../docs/guide/07-overnight.md). |
+| An overnight run moved but finished nothing | the `schedule` tool needs a check that can pass or fail, not a duration. See [guide page 7](../../docs/guide/07-overnight.md). |
 | The reply claims success from a green build | Ask for the real command, flow, stored value, or profile. That's the prove-it-works principle. |
 
 For a run that drifts, [`references/prompting.md`](references/prompting.md) has one-line steers. [Guide page 10](../../docs/guide/10-recipes-and-pitfalls.md) has more pitfalls and the recipes worth copying.

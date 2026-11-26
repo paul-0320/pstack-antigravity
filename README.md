@@ -69,6 +69,17 @@ node scripts/build-antigravity-pstack.mjs
 node scripts/lint-port.mjs --with-agy
 ```
 
+## Custom local overlay builds
+
+If you maintain local workflow overrides on top of this port, pass `--extra-overlay` and `--out` to build directly into your Antigravity plugins folder without forking the generated tree:
+
+```bash
+node scripts/build-antigravity-pstack.mjs \
+  --extra-overlay ~/.gemini/config/my-pstack-overlay \
+  --out ~/.gemini/config/plugins/pstack
+agy plugin validate ~/.gemini/config/plugins/pstack --strict
+```
+
 ## Attribution and license
 
 - Upstream `pstack` is licensed under the [MIT License](./LICENSE), Copyright (c) 2026 Lauren Tan.

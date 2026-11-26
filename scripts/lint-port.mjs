@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Packaging linter for the Antigravity pstack port.
 // Catches portability defects, hardcoded machine paths, external wrapper paths,
-// broken metadata, and runtime invariants that `agy plugin validate` does not inspect.
+// leftover mechanical Cursor/Claude Code strings, unported agents, and broken metadata.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGIN = join(ROOT, "pstack");
 const OVERLAY = join(ROOT, "overlay");
+const ADAPTER_REL = "pstack/docs/harness/antigravity.md";
 
 const BINARY_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".pdf", ".zip"]);
 
@@ -20,6 +21,16 @@ const FORBIDDEN_PATTERNS = [
   { label: "Windows user home path", re: /[A-Za-z]:\\Users\\(?!you\\|user\\|username\\)[A-Za-z0-9._-]+\\/i },
   { label: "external local bin wrapper path", re: /~\/\.gemini\/bin\/|~\/\.claude\/scripts\// },
   { label: "personal email address", re: /[A-Za-z0-9._%+-]+@(?:gmail|naver|daum|hanmail|kakao)\.com/i },
+];
+
+// Mechanical 1:1 patterns that must not survive in pstack/ outside docs/harness/antigravity.md.
+const LEFTOVER_CURSOR_PATTERNS = [
+  { label: "unreplaced AskQuestion", re: /\bAskQuestion\b/ },
+  { label: "unreplaced .cursor/skills/", re: /\.cursor\/skills\// },
+  { label: "unreplaced ~/.cursor/plugins/", re: /~\/\.cursor\/plugins\// },
+  { label: "unreplaced .cursor/worktrees/", re: /\.cursor\/worktrees\// },
+  { label: "unreplaced pstack-models.mdc", re: /pstack-models\.mdc/ },
+  { label: "leftover Claude Code install guidance", re: /\bClaude Code\b/ },
 ];
 
 function walk(dir) {
@@ -56,6 +67,14 @@ for (const full of scanTargets) {
     const match = text.match(re);
     if (match) {
       fail(`portability/leak (${label}) in ${rel}: matched ${JSON.stringify(match[0])}`);
+    }
+  }
+  if (rel.startsWith("pstack/") && rel.endsWith(".md") && rel !== ADAPTER_REL) {
+    for (const { label, re } of LEFTOVER_CURSOR_PATTERNS) {
+      const match = text.match(re);
+      if (match) {
+        fail(`${label} in ${rel}: matched ${JSON.stringify(match[0])}`);
+      }
     }
   }
 }
@@ -142,15 +161,28 @@ if (!existsSync(rulePath)) {
   }
 }
 
-for (const agentFile of ["poteto-agent.md", "comment-sicko.md"]) {
-  const p = join(PLUGIN, "agents", agentFile);
-  if (!existsSync(p)) {
-    fail(`missing pstack/agents/${agentFile}`);
+// Dynamically validate EVERY agent file under pstack/agents/ so newly added upstream agents cannot slip past CI.
+const agentFiles = walk(join(PLUGIN, "agents")).filter((f) => f.endsWith(".md"));
+if (agentFiles.length === 0) {
+  fail("no agent files found in pstack/agents/");
+}
+for (const full of agentFiles) {
+  const rel = relative(ROOT, full);
+  const text = readFileSync(full, "utf8");
+  const fm = text.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+  if (!fm) {
+    fail(`${rel} missing YAML frontmatter`);
     continue;
   }
-  const text = readFileSync(p, "utf8");
-  if (!/^subagent:\s*true\s*$/m.test(text)) fail(`pstack/agents/${agentFile} missing subagent: true`);
-  if (!/^model:\s*inherit\s*$/m.test(text)) fail(`pstack/agents/${agentFile} must use model: inherit`);
+  if (!/^subagent:\s*true\s*$/m.test(fm)) {
+    fail(`${rel} missing Antigravity frontmatter 'subagent: true' (add an Antigravity overlay in overlay/agents/)`);
+  }
+  if (!/^model:\s*(?:inherit|flash|flash_lite|pro)\s*$/m.test(fm)) {
+    fail(`${rel} has invalid Antigravity agent model tier in frontmatter (must be inherit/flash/flash_lite/pro)`);
+  }
+  if (!/^tools:\s*\[/m.test(fm)) {
+    fail(`${rel} missing Antigravity 'tools: [...]' frontmatter`);
+  }
 }
 
 const auditScript = join(PLUGIN, "skills", "poteto-mode", "scripts", "worktree-audit.sh");
@@ -179,4 +211,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`LINT PASS (${scanTargets.length} files scanned, 0 leaks, all Antigravity invariants verified).`);
+console.log(`LINT PASS (${scanTargets.length} files scanned, ${agentFiles.length} agents checked, 0 leaks, all Antigravity invariants verified).`);
